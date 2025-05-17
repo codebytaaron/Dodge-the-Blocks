@@ -1,3 +1,95 @@
+import pygame
+import random
+import sys
+
+# Init
+pygame.init()
+WIDTH, HEIGHT = 600, 800
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Dodge the Blocks")
+
+# Colors
+WHITE = (255, 255, 255)
+RED = (255, 0, 0)
+BLUE = (50, 150, 255)
+BLACK = (0, 0, 0)
+
+# Game objects
+player_size = 50
+player = pygame.Rect(WIDTH // 2, HEIGHT - 2 * player_size, player_size, player_size)
+player_speed = 10
+
+enemy_size = 50
+enemy_list = []
+enemy_speed = 5
+
+clock = pygame.time.Clock()
+score = 0
+font = pygame.font.SysFont("Arial", 32)
+
+def drop_enemies(enemy_list):
+    delay = random.random()
+    if len(enemy_list) < 10 and delay < 0.1:
+        x_pos = random.randint(0, WIDTH - enemy_size)
+        enemy_list.append(pygame.Rect(x_pos, 0, enemy_size, enemy_size))
+
+def draw_enemies(enemy_list):
+    for enemy in enemy_list:
+        pygame.draw.rect(screen, RED, enemy)
+
+def update_enemy_positions(enemy_list, score):
+    for enemy in enemy_list[:]:
+        enemy.y += enemy_speed
+        if enemy.y > HEIGHT:
+            enemy_list.remove(enemy)
+            score += 1
+    return score
+
+def collision_check(enemy_list, player):
+    for enemy in enemy_list:
+        if player.colliderect(enemy):
+            return True
+    return False
+
+# Main loop
+game_over = False
+while not game_over:
+    screen.fill(BLACK)
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            sys.exit()
+
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_LEFT] and player.left > 0:
+        player.x -= player_speed
+    if keys[pygame.K_RIGHT] and player.right < WIDTH:
+        player.x += player_speed
+
+    drop_enemies(enemy_list)
+    score = update_enemy_positions(enemy_list, score)
+
+    if collision_check(enemy_list, player):
+        game_over = True
+
+    draw_enemies(enemy_list)
+    pygame.draw.rect(screen, BLUE, player)
+
+    score_text = font.render(f"Score: {score}", True, WHITE)
+    screen.blit(score_text, (10, 10))
+
+    pygame.display.update()
+    clock.tick(30)
+
+# Game Over Screen
+screen.fill(BLACK)
+game_over_text = font.render("GAME OVER", True, WHITE)
+final_score_text = font.render(f"Final Score: {score}", True, WHITE)
+screen.blit(game_over_text, (WIDTH//2 - 100, HEIGHT//2 - 50))
+screen.blit(final_score_text, (WIDTH//2 - 120, HEIGHT//2))
+pygame.display.update()
+pygame.time.wait(3000)
+pygame.quit()
 # This workflow uses actions that are not certified by GitHub.
 # They are provided by a third-party and are governed by
 # separate terms of service, privacy policy, and support
